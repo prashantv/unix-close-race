@@ -7,12 +7,14 @@ import (
 	"net"
 	"os"
 	"runtime"
+	"syscall"
 	"time"
 )
 
 var (
-	flagPath     = flag.String("path", "/tmp/test.sock", "path to create the unix listener at")
-	flagUseNewFd = flag.Bool("use-new-fd", false, "whether to create the ln out of the file descriptor")
+	flagPath        = flag.String("path", "/tmp/test.sock", "path to create the unix listener at")
+	flagUseNewFd    = flag.Bool("use-new-fd", false, "whether to create the ln out of the file descriptor")
+	flagSetNonblock = flag.Bool("set-nonblock", false, "whether to set O_NONBLOCK on the fd")
 )
 
 func main() {
@@ -40,6 +42,10 @@ func main() {
 
 		testCloseAfterAccept(ln)
 	} else {
+		if *flagSetNonblock {
+			err := syscall.SetNonblock(int(fd), true /* non-blocking */)
+			panicOn(err)
+		}
 		testCloseAfterAccept(unixLn)
 	}
 
